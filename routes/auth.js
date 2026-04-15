@@ -93,4 +93,29 @@ router.get('/me', async (req, res) => {
   }
 });
 
+// ── DELETE /api/auth/me ───────────────────────────────────────
+router.delete('/me', async (req, res) => {
+  try {
+    const bearer = req.header('Authorization');
+    if (!bearer?.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Not authenticated.' });
+    }
+    
+    // Verify token
+    const decoded = jwt.verify(bearer.split(' ')[1], JWT_SECRET);
+    
+    // Find and delete the user
+    const deletedUser = await User.findByIdAndDelete(decoded.user.id);
+    
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    return res.json({ message: 'Account permanently deleted.' });
+  } catch (err) {
+    console.error('[DELETE ACCOUNT]', err.message);
+    return res.status(500).json({ message: 'Could not delete account. Please try again.' });
+  }
+});
+
 export default router;
