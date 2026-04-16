@@ -1,7 +1,7 @@
 import express from 'express';
 import LibraryEntry from '../models/LibraryEntry.js';
 import Title from '../models/Title.js';
-import auth from '../middleware/auth.js';
+import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -21,7 +21,7 @@ router.post('/', auth, async (req, res) => {
     // 1. Find or create the Title document
     const savedTitle = await Title.findOneAndUpdate(
       { apiId: String(titleId) },
-      { 
+      {
         title: titleDetails.title,
         coverImage: titleDetails.coverImage,
         status: titleDetails.status,
