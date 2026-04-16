@@ -4,11 +4,11 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_in_production';
+const getSecret = () => process.env.JWT_SECRET || 'dev_secret_change_in_production';
 
 // ── helper ────────────────────────────────────────────────────
 const signToken = (userId) =>
-  jwt.sign({ user: { id: userId } }, JWT_SECRET, { expiresIn: '7d' });
+  jwt.sign({ user: { id: userId } }, getSecret(), { expiresIn: '7d' });
 
 const safeUser = (u) => ({
   id: u._id,
@@ -38,7 +38,7 @@ router.post('/register', async (req, res) => {
       User.findOne({ email: email.toLowerCase() }),
       User.findOne({ username: username.toLowerCase() }),
     ]);
-    if (emailTaken)    return res.status(400).json({ message: 'That email is already registered.' });
+    if (emailTaken) return res.status(400).json({ message: 'That email is already registered.' });
     if (usernameTaken) return res.status(400).json({ message: 'That username is already taken.' });
 
     const hashed = await bcrypt.hash(password, 12);
@@ -84,7 +84,7 @@ router.get('/me', async (req, res) => {
     if (!bearer?.startsWith('Bearer ')) {
       return res.status(401).json({ message: 'Not authenticated.' });
     }
-    const decoded = jwt.verify(bearer.split(' ')[1], JWT_SECRET);
+    const decoded = jwt.verify(bearer.split(' ')[1], getSecret());
     const user = await User.findById(decoded.user.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found.' });
     return res.json({ user: safeUser(user) });
@@ -100,13 +100,13 @@ router.delete('/me', async (req, res) => {
     if (!bearer?.startsWith('Bearer ')) {
       return res.status(401).json({ message: 'Not authenticated.' });
     }
-    
+
     // Verify token
-    const decoded = jwt.verify(bearer.split(' ')[1], JWT_SECRET);
-    
+    const decoded = jwt.verify(bearer.split(' ')[1], getSecret());
+
     // Find and delete the user
     const deletedUser = await User.findByIdAndDelete(decoded.user.id);
-    
+
     if (!deletedUser) {
       return res.status(404).json({ message: 'User not found.' });
     }
