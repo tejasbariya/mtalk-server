@@ -93,6 +93,51 @@ router.get('/me', async (req, res) => {
   }
 });
 
+// ── PUT /api/auth/me ──────────────────────────────────────────
+router.put('/me', async (req, res) => {
+  try {
+    const bearer = req.header('Authorization');
+    if (!bearer?.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Not authenticated.' });
+    }
+    const token = bearer.split(' ')[1];
+    const decoded = jwt.verify(token, getSecret());
+
+    const { username, bio } = req.body;
+    const user = await User.findById(decoded.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+
+    if (username !== undefined) {
+      const trimmedUsername = username.trim();
+      if (!/^[a-z0-9_]{3,20}$/i.test(trimmedUsername)) {
+        return res.status(400).json({ message: 'Username must be 3-20 characters (letters, numbers, underscores only).' });
+      }
+
+      // Check uniqueness if username changed
+      if (trimmedUsername.toLowerCase() !== user.username.toLowerCase()) {
+        const usernameTaken = await User.findOne({ username: trimmedUsername.toLowerCase() });
+        if (usernameTaken) {
+          return res.status(400).json({ message: 'That username is already taken.' });
+        }
+      }
+      user.username = trimmedUsername;
+    }
+
+    if (bio !== undefined) {
+      user.bio = bio.trim();
+    }
+
+    await user.save();
+    return res.json({ user: safeUser(user) });
+  } catch (err) {
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Session expired. Please sign in again.' });
+    }
+    console.error('[UPDATE ME]', err.message);
+    return res.status(500).json({ message: 'Failed to update profile.' });
+  }
+});
+
 // ── DELETE /api/auth/me ───────────────────────────────────────
 router.delete('/me', async (req, res) => {
   try {
