@@ -90,4 +90,23 @@ router.get('/reviews/:titleId', async (req, res) => {
   }
 });
 
+// ── DELETE /api/library/review/:reviewId ──────────────────────
+router.delete('/review/:reviewId', auth, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.reviewId);
+    if (!review) return res.status(404).json({ message: 'Review not found' });
+
+    // Only allow deletion if user owns the review
+    if (review.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    await review.deleteOne();
+    res.json({ message: 'Review deleted successfully' });
+  } catch (err) {
+    console.error('[REVIEW_DELETE]', err.message);
+    res.status(500).json({ message: 'Failed to delete review' });
+  }
+});
+
 export default router;
