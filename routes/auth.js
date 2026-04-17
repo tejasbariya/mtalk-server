@@ -16,6 +16,7 @@ const safeUser = (u) => ({
   email: u.email,
   karma: u.karma,
   avatar: u.avatar,
+  banner: u.banner,
   bio: u.bio,
 });
 
@@ -125,6 +126,14 @@ router.put('/me', async (req, res) => {
 
     if (bio !== undefined) {
       user.bio = bio.trim();
+    }
+
+    if (req.body.avatar !== undefined) {
+      user.avatar = req.body.avatar.trim();
+    }
+
+    if (req.body.banner !== undefined) {
+      user.banner = req.body.banner.trim();
     }
 
     await user.save();
