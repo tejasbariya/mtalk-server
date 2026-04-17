@@ -147,6 +147,26 @@ router.put('/me', async (req, res) => {
   }
 });
 
+// ── GET /api/auth/search ──────────────────────────────────────
+router.get('/search', async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.json([]);
+    
+    // Search by username, case-insensitive, limit 10
+    const users = await User.find({ 
+      username: new RegExp(q, 'i') 
+    })
+    .select('username avatar karma')
+    .limit(10);
+    
+    res.json(users);
+  } catch (err) {
+    console.error('[SEARCH USERS]', err.message);
+    res.status(500).json({ message: 'Search failed' });
+  }
+});
+
 // ── DELETE /api/auth/me ───────────────────────────────────────
 router.delete('/me', async (req, res) => {
   try {
