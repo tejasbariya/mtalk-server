@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import libraryRoutes from './routes/library.js';
+import ChatMessage from './models/ChatMessage.js';
 
 dotenv.config();
 
@@ -35,6 +36,9 @@ const io = new Server(httpServer, {
   cors: { origin: allowedOrigins, methods: ['GET', 'POST'] },
   pingTimeout: 60000,
 });
+
+// To track online members per room
+const roomMembers = {}; // { [room]: { [socketId]: { username, avatar } } }
 
 // ─── MongoDB — resilient connection with retry ────────────────
 let MONGO_URI = process.env.MONGO_URI || '';
@@ -118,11 +122,74 @@ app.use((err, _req, res, _next) => {
 
 // ─── Socket.io Events ────────────────────────────────────────
 io.on('connection', (socket) => {
-  socket.on('join_global', () => socket.join('global'));
-  socket.on('join_title',  (id) => socket.join(`title_${id}`));
-  socket.on('send_message', (data) => {
+  
+  socket.on('join_global', (userData) => {
+    const room = 'global';
+    socket.join(room);
+    
+    // Track member
+    if (userData && userData.username) {
+      if (!roomMembers[room]) roomMembers[room] = {};
+      roomMembers[room][socket.id] = userData;
+      io.to(room).emit('room_members', Object.values(roomMembers[room]));
+    }
+  });
+
+  socket.on('get_history', async (room) => {
+    try {
+      const messages = await ChatMessage.find({ room })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .populate('user', 'username avatar karma');
+      
+      socket.emit('chat_history', messages.reverse());
+    } catch (err) {
+      console.error('[SOCKET_HISTORY_ERROR]', err);
+    }
+  });
+
+  socket.on('join_title', (data) => {
+    // data could be { id, user }
+    const roomId = `title_${data.id}`;
+    socket.join(roomId);
+    
+    if (data.user && data.user.username) {
+      if (!roomMembers[roomId]) roomMembers[roomId] = {};
+      roomMembers[roomId][socket.id] = data.user;
+      io.to(roomId).emit('room_members', Object.values(roomMembers[roomId]));
+    }
+  });
+
+  socket.on('send_message', async (data) => {
     const room = data.room === 'global' ? 'global' : `title_${data.room}`;
-    io.to(room).emit('receive_message', data);
+    
+    try {
+      // Persist to DB
+      const newMessage = await ChatMessage.create({
+        room,
+        user: data.user.id,
+        text: data.text
+      });
+      
+      // Emit with populated data (or just data if you already have it)
+      io.to(room).emit('receive_message', {
+        ...data,
+        _id: newMessage._id,
+        createdAt: newMessage.createdAt
+      });
+    } catch (err) {
+      console.error('[SOCKET_SEND_ERROR]', err);
+    }
+  });
+
+  socket.on('disconnecting', () => {
+    // Remove user from all rooms they were tracked in
+    socket.rooms.forEach(room => {
+      if (roomMembers[room] && roomMembers[room][socket.id]) {
+        delete roomMembers[room][socket.id];
+        io.to(room).emit('room_members', Object.values(roomMembers[room]));
+      }
+    });
   });
 });
 
