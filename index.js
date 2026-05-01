@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { connectDB, requireDB, dbReady } from './src/config/db.js'
 import authRoutes from './src/routes/authRoutes.js';
-import libraryRoutes from './src/routes/library.js';
+import libraryRoutes from './src/routes/libraryRoutes.js';
 import ChatMessage from './src/models/ChatMessage.js';
 
 dotenv.config();
