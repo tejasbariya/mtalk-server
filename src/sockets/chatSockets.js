@@ -1,4 +1,5 @@
 import * as chatService from '../services/chatService.js';
+import DOMPurify from 'isomorphic-dompurify';
 
 // Tracking object to manage room members in-memory
 const roomMembers = {};
@@ -8,7 +9,7 @@ export const setupChatSockets = (io) => {
 
         // Using the unified join_room from  hybrid setup
         socket.on('join_room', (data) => {
-            const room = data.room; 
+            const room = data.room;
             socket.join(room);
 
             if (data.user && data.user.username) {
@@ -22,6 +23,10 @@ export const setupChatSockets = (io) => {
             const room = data.room;
 
             try {
+                const clean = DOMPurify.sanitize(data.text);
+                // Reject empty messages
+                if (!clean.trim()) return;
+
                 // Use the shared service to save the DB record
                 const populatedMessage = await chatService.saveMessage(room, data.user.id, data.text);
 
