@@ -107,9 +107,30 @@ export const searchByUsername = async (query) => {
 };
 
 export const deleteUser = async (userId) => {
-    const deletedUser = await User.findByIdAndDelete(userId);
-    if (!deletedUser) {
-        throw { status: 404, message: 'User not found.' };
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        await Promise.all([
+            Review.deleteMany({ user: userId }, { session }),
+            Comment.deleteMany({ user: userId }, { session }),
+            ChatMessage.deleteMany({ user: userId }, { session }),
+            FriendRequest.deleteMany({ 
+                $or: [{ sender: userId }, { receiver: userId }] 
+            }, { session }),
+            Notification.deleteMany({ 
+                $or: [{ from: userId }, { to: userId }] 
+            }, { session }),
+            LibraryEntry.deleteMany({ user: userId }, { session }),
+            User.findByIdAndDelete(userId, { session })
+        ]);
+
+        await session.commitTransaction();
+        return true;
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        await session.endSession();
     }
-    return true;
 };
