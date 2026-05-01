@@ -8,7 +8,7 @@ const generateToken = (userId) => {
     return jwt.sign(
         { id: userId },
         process.env.JWT_SECRET,
-        { expiresIn: '7`d' } // Users stay logged in for 30 days
+        { expiresIn: '7d' } // Users stay logged in for 30 days
     );
 };
 
