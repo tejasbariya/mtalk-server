@@ -42,7 +42,7 @@ export const setupChatSockets = (io) => {
                 if (!clean.trim()) return;
 
                 // Use the shared service to save the DB record
-                const populatedMessage = await chatService.saveMessage(room, data.user.id, data.text);
+                const populatedMessage = await chatService.saveMessage(room, data.user.id, clean);
 
                 // Instantly push the new message to everyone in the room
                 io.to(room).emit('receive_message', populatedMessage);
