@@ -6,8 +6,14 @@ const router = express.Router();
 
 router.get('/:room', requireAuth, async (req, res) => {
     try {
-        const messages = await chatService.getRoomHistory(req.params.room);
-        res.json(messages);
+        const room = req.params.room;   
+        const page = parseInt(req.query.page) || 1;
+        const limit = 50;
+        const skip = (page - 1) * limit;
+        const messages = await chatService.getRoomHistory(room, skip, limit);
+        const total = await ChatMessage.countDocuments({ room });
+        
+        res.json({ messages, page, total, pages: Math.ceil(total / limit) });
     } catch (err) {
         console.error('[CHAT_API_ERROR]', err);
         res.status(500).json({ message: 'Failed to load chat history.' });
