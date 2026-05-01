@@ -40,6 +40,18 @@ const io = new Server(httpServer, {
   pingTimeout: 60000,
 });
 
+const verifyToken = (socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) return next(new Error('Missing token'));
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return next(new Error('Invalid token'));
+    socket.userId = decoded.id; // Store user ID from token
+    next();
+  });
+};
+
+io.use(verifyToken);
+
 // Pass the io instance into your separate file!
 setupChatSockets(io); 
 
