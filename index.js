@@ -1,20 +1,20 @@
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import authRoutes from './routes/auth.js';
-import libraryRoutes from './routes/library.js';
-import ChatMessage from './models/ChatMessage.js';
+import { connectDB, requireDB, dbReady } from './src/config/db.js'
+import authRoutes from './src/routes/auth.js';
+import libraryRoutes from './src/routes/library.js';
+import ChatMessage from './src/models/ChatMessage.js';
 
 dotenv.config();
 
-// ─── App & Server ────────────────────────────────────────────
+//  App & Server 
 const app = express();
 const httpServer = http.createServer(app);
 
-// ─── CORS ─────────────────────────────────────────────────────
+//  CORS 
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(',').map(o => o.trim())
   : ['http://localhost:5173', 'http://localhost:3000'];
@@ -23,7 +23,7 @@ app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ─── Request logger (dev) ─────────────────────────────────────
+//  Request logger (dev) ─
 if (process.env.NODE_ENV !== 'production') {
   app.use((req, _res, next) => {
     console.log(`→ ${req.method} ${req.path}`);
@@ -31,7 +31,7 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// ─── Socket.io ───────────────────────────────────────────────
+//  Socket.io 
 const io = new Server(httpServer, {
   cors: { origin: allowedOrigins, methods: ['GET', 'POST'] },
   pingTimeout: 60000,
@@ -40,65 +40,10 @@ const io = new Server(httpServer, {
 // To track online members per room
 const roomMembers = {}; // { [room]: { [socketId]: { username, avatar } } }
 
-// ─── MongoDB — resilient connection with retry ────────────────
-let MONGO_URI = process.env.MONGO_URI || '';
-if (!MONGO_URI || MONGO_URI.includes('<db_password>')) {
-  console.warn('⚠️   MONGO_URI missing or unpopulated — using local MongoDB.');
-  MONGO_URI = 'mongodb://127.0.0.1:27017/mtalk';
-}
-
-// Track connection state so routes can return a friendly error
-let dbReady = false;
-
-const connectDB = async (attempt = 1) => {
-  const maxAttempts = 10;
-  const delay = Math.min(1000 * 2 ** (attempt - 1), 30000); // exponential up to 30s
-
-  try {
-    await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 5000,
-    });
-    dbReady = true;
-    const label = MONGO_URI.includes('@')
-      ? MONGO_URI.split('@')[1].split('/')[0]
-      : MONGO_URI;
-    console.log(`✅  MongoDB connected → ${label}`);
-  } catch (err) {
-    dbReady = false;
-    console.error(`❌  MongoDB attempt ${attempt}/${maxAttempts} failed: ${err.message}`);
-    if (attempt < maxAttempts) {
-      console.log(`    Retrying in ${delay / 1000}s…`);
-      setTimeout(() => connectDB(attempt + 1), delay);
-    } else {
-      console.error('    Giving up after max retries. The server stays running but DB-dependent routes will return 503.');
-    }
-  }
-};
-
-// Re-connect on unexpected drop
-mongoose.connection.on('disconnected', () => {
-  dbReady = false;
-  console.warn('⚠️  MongoDB disconnected — attempting to reconnect…');
-  connectDB();
-});
-mongoose.connection.on('reconnected', () => {
-  dbReady = true;
-  console.log('✅  MongoDB reconnected');
-});
-
+// Connect db
 connectDB();
 
-// ─── Middleware: guard routes when DB is unavailable ─────────
-export const requireDB = (_req, res, next) => {
-  if (!dbReady) {
-    return res.status(503).json({
-      message: 'Database is temporarily unavailable. Please try again in a moment.',
-    });
-  }
-  next();
-};
-
-// ─── API Routes ───────────────────────────────────────────────
+//  API Routes 
 app.use('/api/auth',    requireDB, authRoutes);
 app.use('/api/library', requireDB, libraryRoutes);
 
@@ -120,7 +65,7 @@ app.use((err, _req, res, _next) => {
   });
 });
 
-// ─── Socket.io Events ────────────────────────────────────────
+//  Socket.io Events ─
 io.on('connection', (socket) => {
   
   socket.on('join_global', (userData) => {
@@ -193,7 +138,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// ─── Graceful shutdown ────────────────────────────────────────
+//  Graceful shutdown ─
 const shutdown = async (signal) => {
   console.log(`\n${signal} received — shutting down gracefully…`);
   httpServer.close(async () => {
@@ -213,7 +158,7 @@ process.on('uncaughtException', (err) => {
   console.error('[UncaughtException]', err.message);
 });
 
-// ─── Start ───────────────────────────────────────────────────
+//  Start 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () =>
   console.log(`🚀  Server → http://localhost:${PORT}`)
