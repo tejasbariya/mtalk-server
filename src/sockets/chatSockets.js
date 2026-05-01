@@ -4,6 +4,19 @@ import DOMPurify from 'isomorphic-dompurify';
 // Tracking object to manage room members in-memory
 const roomMembers = {};
 
+const validateSendMessage = (data) => {
+    if (!data.room || typeof data.room !== 'string') {
+        throw new Error('Invalid room');
+    }
+    if (!data.text || typeof data.text !== 'string') {
+        throw new Error('Invalid text');
+    }
+    if (data.text.length > 2000) {
+        throw new Error('Message too long (max 2000 chars)');
+    }
+    return true;
+};
+
 export const setupChatSockets = (io) => {
     io.on('connection', (socket) => {
 
@@ -20,9 +33,10 @@ export const setupChatSockets = (io) => {
         });
 
         socket.on('send_message', async (data) => {
-            const room = data.room;
-
+            
             try {
+                validateSendMessage(data);
+                const room = data.room;
                 const clean = DOMPurify.sanitize(data.text);
                 // Reject empty messages
                 if (!clean.trim()) return;
