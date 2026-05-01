@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import jwt from 'jsonwebtoken';
 
 import { connectDB, requireDB, dbReady } from './src/config/db.js';
 import { apiLimiter, authLimiter } from './src/middleware/rateLimiter.js';

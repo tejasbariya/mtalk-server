@@ -1,6 +1,12 @@
 import bcrypt from 'bcryptjs';
-import User from '../models/User.js';
 import { generateToken, safeUser } from '../utils/authUtils.js';
+import User from '../models/User.js';
+import Review from '../models/Review.js';
+import Comment from '../models/Comment.js';
+import ChatMessage from '../models/ChatMessage.js';
+import FriendRequest from '../models/FriendRequest.js';
+import Notification from '../models/Notification.js';
+import LibraryEntry from '../models/LibraryEntry.js';
 
 export const registerUser = async (userData) => {
     const { username, email, password } = userData;
