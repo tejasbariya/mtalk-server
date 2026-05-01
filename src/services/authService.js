@@ -3,7 +3,51 @@ import User from '../models/User.js';
 import { generateToken, safeUser } from '../utils/authUtils.js';
 
 export const registerUser = async (userData) => {
-    // Assuming your register logic is here
+    const { username, email, password } = userData;
+
+    // Validate inputs
+    if (!username || !email || !password) {
+        throw { status: 400, message: 'Username, email, and password are required.' };
+    }
+
+    if (!/^[a-z0-9_]{3,20}$/i.test(username.trim())) {
+        throw { status: 400, message: 'Username must be 3-20 characters (letters, numbers, underscores only).' };
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.toLowerCase().trim())) {
+        throw { status: 400, message: 'Invalid email format.' };
+    }
+
+    if (password.length < 12 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+        throw { status: 400, message: 'Password must be 12+ characters with uppercase and numbers.' };
+    }
+
+    // Check uniqueness
+    const [existingUser, existingEmail] = await Promise.all([
+        User.findOne({ username: username.toLowerCase() }),
+        User.findOne({ email: email.toLowerCase() })
+    ]);
+
+    if (existingUser) {
+        throw { status: 400, message: 'Username already taken.' };
+    }
+
+    if (existingEmail) {
+        throw { status: 400, message: 'Email already registered.' };
+    }
+
+    // Hash and save
+    const hashed = await bcrypt.hash(password, 12);
+    const newUser = await User.create({
+        username: username.trim().toLowerCase(),
+        email: email.toLowerCase().trim(),
+        password: hashed
+    });
+
+    return {
+        token: generateToken(newUser._id),
+        user: safeUser(newUser)
+    };
 };
 
 export const loginUser = async (email, password) => {
