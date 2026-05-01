@@ -6,10 +6,11 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 
 import { connectDB, requireDB, dbReady } from './src/config/db.js';
-import authRoutes from './src/routes/authRoutes.js';
+import { apiLimiter, authLimiter } from './src/middleware/rateLimiter.js';
+import { setupChatSockets } from './src/sockets/chatSockets.js'; 
 import libraryRoutes from './src/routes/libraryRoutes.js';
+import authRoutes from './src/routes/authRoutes.js';
 import chatRoutes from './src/routes/chatRoutes.js';
-import { setupChatSockets } from './src/sockets/chatSockets.js'; // <-- Import your new socket file
 
 dotenv.config();
 
@@ -28,9 +29,10 @@ app.use(express.urlencoded({ extended: true }));
 connectDB();
 
 // 2. Setup Express REST Routes
-app.use('/api/auth', requireDB, authRoutes);
-app.use('/api/library', requireDB, libraryRoutes);
-app.use('/api/chat', requireDB, chatRoutes);
+app.use('/api/', apiLimiter); // Apply general API rate limiter to all /api routes
+app.use('/api/auth', requireDB, authLimiter, authRoutes);
+app.use('/api/library', requireDB, apiLimiter, libraryRoutes);
+app.use('/api/chat', requireDB, apiLimiter, chatRoutes);
 
 app.get('/api/ping', (_req, res) => res.json({ ok: true, db: dbReady }));
 
