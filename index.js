@@ -12,6 +12,7 @@ import { setupChatSockets } from './src/sockets/chatSockets.js';
 import libraryRoutes from './src/routes/libraryRoutes.js';
 import authRoutes from './src/routes/authRoutes.js';
 import chatRoutes from './src/routes/chatRoutes.js';
+import titleRoutes from './src/routes/titleRoutes.js';
 
 dotenv.config();
 
@@ -52,6 +53,7 @@ app.use('/api/', apiLimiter); // Apply general API rate limiter to all /api rout
 app.use('/api/auth', requireDB, authLimiter, authRoutes);
 app.use('/api/library', requireDB, apiLimiter, libraryRoutes);
 app.use('/api/chat', requireDB, apiLimiter, chatRoutes);
+app.use('/api/titles', requireDB, apiLimiter, titleRoutes);
 
 app.get('/api/ping', (_req, res) => res.json({ ok: true, db: dbReady }));
 
