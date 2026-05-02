@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 import { generateToken, safeUser } from '../utils/authUtils.js';
 import User from '../models/User.js';
 import Review from '../models/Review.js';
