@@ -32,15 +32,27 @@ export const upsertEntryAndTitle = async (userId, titleId, status, titleDetails)
 export const createReview = async (userId, apiId, content, rating) => {
     const title = await Title.findOne({ apiId: String(apiId) });
     if (!title) {
-        throw { status: 404, message: 'Title not found in database. Please add it to your library first.' };
+        throw { status: 404, message: 'Title not found in database.' };
     }
 
-    return await Review.create({
+    const review = await Review.create({
         user: userId,
         title: title._id,
         content,
         rating
     });
+
+    const reviews = await Review.find({ title: title._id });
+    const avg = reviews.length 
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
+        : 0;
+    
+    await Title.findByIdAndUpdate(title._id, {
+        averageRating: avg,
+        totalRatings: reviews.length
+    });
+
+    return review;
 };
 
 export const getReviewsForTitle = async (apiId) => {
