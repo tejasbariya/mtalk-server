@@ -12,4 +12,7 @@ const titleSchema = new mongoose.Schema({
   source: { type: String, enum: ['ANILIST', 'JIKAN'], required: true }
 }, { timestamps: true });
 
+titleSchema.index({ slug: 1 });
+titleSchema.index({ title: 'text' });
+
 export default mongoose.model('Title', titleSchema);
