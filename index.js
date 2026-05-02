@@ -15,6 +15,24 @@ import chatRoutes from './src/routes/chatRoutes.js';
 
 dotenv.config();
 
+// Check for required environment variables
+if (!process.env.JWT_SECRET) {
+    console.error('❌ FATAL: JWT_SECRET not set in .env');
+    process.exit(1);
+}
+if (!process.env.MONGO_URI && process.env.NODE_ENV === 'production') {
+    console.error('❌ FATAL: MONGO_URI required for production');
+    process.exit(1);
+}
+if (!process.env.CLIENT_URL) {
+    console.error('❌ FATAL: CLIENT_URL not set in .env');
+    process.exit(1);
+}
+if (process.env.NODE_ENV === 'production' && !process.env.PORT) {
+    console.error('❌ FATAL: PORT not set in .env for production');
+    process.exit(1);
+}
+
 const app = express();
 const httpServer = http.createServer(app);
 
