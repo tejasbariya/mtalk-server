@@ -7,4 +7,7 @@ const karmaLogSchema = new mongoose.Schema({
   referenceId: { type: mongoose.Schema.Types.ObjectId } // Optional: link to review/comment
 }, { timestamps: true });
 
+karmaLogSchema.index({ user: 1 });
+karmaLogSchema.index({ reason: 1 });
+
 export default mongoose.model('KarmaLog', karmaLogSchema);
