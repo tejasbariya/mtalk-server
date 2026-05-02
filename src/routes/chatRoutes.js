@@ -1,7 +1,7 @@
 import express from 'express';
 import * as chatService from '../services/chatService.js';
 import { requireAuth } from '../middleware/requireAuth.js';
-import chatMessage from '../models/ChatMessage.js';
+import ChatMessage from '../models/ChatMessage.js';
 
 const router = express.Router();
 
