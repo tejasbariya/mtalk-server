@@ -73,6 +73,18 @@ export const removeReview = async (reviewId, userId) => {
         throw { status: 403, message: 'Unauthorized' };
     }
 
+    const titleId = review.title;
     await review.deleteOne();
+
+    const reviews = await Review.find({ title: titleId });
+    const avg = reviews.length 
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length 
+        : 0;
+    
+    await Title.findByIdAndUpdate(titleId, {
+        averageRating: avg,
+        totalRatings: reviews.length
+    });
+
     return true;
 };
