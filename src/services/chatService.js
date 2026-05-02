@@ -1,9 +1,10 @@
 import ChatMessage from '../models/ChatMessage.js';
 
-export const getRoomHistory = async (room) => {
+export const getRoomHistory = async (room, skip=0, limit=50) => {
     const messages = await ChatMessage.find({ room })
         .sort({ createdAt: -1 })
-        .limit(50)
+        .skip(skip)
+        .limit(limit)
         .populate('user', 'username avatar karma');
 
     return messages.reverse();
