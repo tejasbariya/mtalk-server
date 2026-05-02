@@ -38,6 +38,9 @@ if (process.env.NODE_ENV === 'production' && !process.env.PORT) {
 const app = express();
 const httpServer = http.createServer(app);
 
+// trust first proxy (if behind a reverse proxy like Nginx or Heroku) for correct IP and secure cookies
+app.set('trust proxy', 1);
+
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(',').map(o => o.trim())
   : ['http://localhost:5173', 'http://localhost:3000'];
