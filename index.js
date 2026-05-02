@@ -13,6 +13,7 @@ import libraryRoutes from './src/routes/libraryRoutes.js';
 import authRoutes from './src/routes/authRoutes.js';
 import chatRoutes from './src/routes/chatRoutes.js';
 import titleRoutes from './src/routes/titleRoutes.js';
+import profileRoutes from './src/routes/profileRoutes.js';
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ app.use('/api/auth', requireDB, authLimiter, authRoutes);
 app.use('/api/library', requireDB, apiLimiter, libraryRoutes);
 app.use('/api/chat', requireDB, apiLimiter, chatRoutes);
 app.use('/api/titles', requireDB, apiLimiter, titleRoutes);
+app.use('/api/profile', requireDB, apiLimiter, profileRoutes);
 
 app.get('/api/ping', (_req, res) => res.json({ ok: true, db: dbReady }));
 
