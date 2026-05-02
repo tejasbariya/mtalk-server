@@ -14,6 +14,7 @@ import authRoutes from './src/routes/authRoutes.js';
 import chatRoutes from './src/routes/chatRoutes.js';
 import titleRoutes from './src/routes/titleRoutes.js';
 import profileRoutes from './src/routes/profileRoutes.js';
+import friendRoutes from './src/routes/friendRoutes.js';
 
 dotenv.config();
 
