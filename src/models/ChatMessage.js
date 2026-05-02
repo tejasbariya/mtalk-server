@@ -6,4 +6,7 @@ const chatMessageSchema = new mongoose.Schema({
   text: { type: String, required: true },
 }, { timestamps: true });
 
+chatMessageSchema.index({ room: 1, createdAt: -1 });
+chatMessageSchema.index({ user: 1 });
+
 export default mongoose.model('ChatMessage', chatMessageSchema);

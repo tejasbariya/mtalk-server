@@ -9,4 +9,7 @@ const commentSchema = new mongoose.Schema({
   downvotes: { type: Number, default: 0 }
 }, { timestamps: true });
 
+commentSchema.index({ review: 1 });
+commentSchema.index({ title: 1 });
+
 export default mongoose.model('Comment', commentSchema);

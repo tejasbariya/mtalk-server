@@ -12,4 +12,7 @@ const titleSchema = new mongoose.Schema({
   source: { type: String, enum: ['ANILIST', 'JIKAN'], required: true }
 }, { timestamps: true });
 
+titleSchema.index({ apiId: 1 }); // Already has unique index, but explicit helps
+titleSchema.index({ title: 'text' }); // For search
+
 export default mongoose.model('Title', titleSchema);

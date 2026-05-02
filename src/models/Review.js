@@ -9,4 +9,8 @@ const reviewSchema = new mongoose.Schema({
   downvotes: { type: Number, default: 0 }
 }, { timestamps: true });
 
+reviewSchema.index({ title: 1 }); // For getTitleReviews queries
+reviewSchema.index({ user: 1 }); // For user review search
+reviewSchema.index({ createdAt: -1 }); // For sorting
+
 export default mongoose.model('Review', reviewSchema);

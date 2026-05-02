@@ -8,4 +8,7 @@ const libraryEntrySchema = new mongoose.Schema({
   score: { type: Number, min: 0, max: 10, default: 0 }
 }, { timestamps: true });
 
+libraryEntrySchema.index({ user: 1 });
+libraryEntrySchema.index({ title: 1 });
+
 export default mongoose.model('LibraryEntry', libraryEntrySchema);
