@@ -9,6 +9,16 @@ export const getUserLibrary = async (req, res) => {
     }
 };
 
+export const checkLibraryStatus = async (req, res) => {
+    try {
+        const entry = await libraryService.checkTitleStatus(req.user.id, req.params.apiId);
+        res.json({ entry }); // Returns entry or null
+    } catch (err) {
+        console.error('[LIBRARY_CHECK]', err);
+        res.status(500).json({ message: 'Server error checking library status' });
+    }
+}
+
 export const addLibraryEntry = async (req, res) => {
     try {
         const { titleId, status, titleDetails } = req.body;

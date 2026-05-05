@@ -6,6 +6,14 @@ export const getEntriesByUser = async (userId) => {
     return await LibraryEntry.find({ user: userId }).populate('title');
 };
 
+// Returns the library entry for a specific title if it exists, otherwise null
+export const checkTitleStatus = async (userId, apiId) => {
+    const title = await Title.findOne({ apiId: String(apiId) });
+    if (!title) return null;
+    return await LibraryEntry.findOne({ user: userId, title: title._id });
+};
+
+// Upserts both the Title and LibraryEntry in one operation
 export const upsertEntryAndTitle = async (userId, titleId, status, titleDetails) => {
     // 1. Find or create the Title document
     const savedTitle = await Title.findOneAndUpdate(
@@ -29,6 +37,7 @@ export const upsertEntryAndTitle = async (userId, titleId, status, titleDetails)
     return entry;
 };
 
+// This function is used by the controller to check if a title is in the user's library and return the entry if it exists
 export const createReview = async (userId, apiId, content, rating) => {
     const title = await Title.findOne({ apiId: String(apiId) });
     if (!title) {
@@ -55,6 +64,7 @@ export const createReview = async (userId, apiId, content, rating) => {
     return review;
 };
 
+// This function is used by the controller to fetch all reviews for a given title
 export const getReviewsForTitle = async (apiId) => {
     const title = await Title.findOne({ apiId: String(apiId) });
     if (!title) return [];
@@ -64,6 +74,7 @@ export const getReviewsForTitle = async (apiId) => {
         .sort({ createdAt: -1 });
 };
 
+// This function is used by the controller to delete a review, ensuring only the author can delete it, and then updates the title's average rating
 export const removeReview = async (reviewId, userId) => {
     const review = await Review.findById(reviewId);
     if (!review) throw { status: 404, message: 'Review not found' };
