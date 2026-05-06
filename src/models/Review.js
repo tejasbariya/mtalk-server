@@ -5,8 +5,8 @@ const reviewSchema = new mongoose.Schema({
   title: { type: mongoose.Schema.Types.ObjectId, ref: 'Title', required: true },
   content: { type: String, required: true },
   rating: { type: Number, min: 1, max: 10, required: true },
-  upvotes: { type: Number, default: 0 },
-  downvotes: { type: Number, default: 0 }
+  upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  downvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 }, { timestamps: true });
 
 reviewSchema.index({ title: 1 }); // For getTitleReviews queries
