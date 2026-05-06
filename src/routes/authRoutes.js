@@ -6,11 +6,11 @@ const router = express.Router();
 
 router.post('/register', authController.register);
 router.post('/login', authController.login);
-router.get('/search', authController.searchUsers);
 
 // Protected Routes
 router.get('/me', requireAuth, authController.getCurrentUser);
 router.put('/me', requireAuth, authController.updateProfile);
 router.delete('/me', requireAuth, authController.deleteAccount);
+router.get('/search',requireAuth, authController.searchUsers);
 
 export default router;

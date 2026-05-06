@@ -14,13 +14,22 @@ export const sendFriendRequest = async (senderId, receiverId) => {
     });
     
     if (existing) {
-        throw { status: 400, message: 'Request already exists' };
+        if (existing.status === 'ACCEPTED') throw { status: 400, message: 'You are already friends' };
+        if (existing.status === 'PENDING') throw { status: 400, message: 'Friend request already pending' };
+        if (existing.status === 'DECLINED') {
+            existing.sender = senderId;
+            existing.receiver = receiverId;
+            existing.status = 'PENDING';
+            await existing.save();
+            return await existing.populate('sender', 'username avatar');
+        }
     }
     
     const request = await FriendRequest.create({
         sender: senderId,
         receiver: receiverId,
-        status: 'PENDING'
+        status: 'PENDING',
+        timestamp: new Date()
     });
     
     return await request.populate('sender', 'username avatar');

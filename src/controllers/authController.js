@@ -47,7 +47,7 @@ export const searchUsers = async (req, res) => {
     try {
         const { q } = req.query;
         if (!q) return res.json([]);
-        const users = await authService.searchByUsername(q);
+        const users = await authService.searchByUsername(q, req.user.id);
         res.json(users);
     } catch (err) {
         console.error('[SEARCH USERS]', err.message);

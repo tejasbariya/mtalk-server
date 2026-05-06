@@ -103,12 +103,37 @@ export const updateUser = async (userId, updates) => {
     return safeUser(user);
 };
 
-export const searchByUsername = async (query) => {
-    const users = await User.find({
-        username: new RegExp(query, 'i')
+export const searchByUsername = async (query, currentUserId) => {
+   const users = await User.find({
+        username: new RegExp(query, 'i'),
+        _id: { $ne: currentUserId } // Exclude the searcher from the results
     })
-        .select('username avatar karma')
-        .limit(10);
+    .select('username avatar karma')
+    .limit(10)
+    .lean();
+
+    // Attach relationship status to each user
+    for (let u of users) {
+        const isFriend = await User.exists({ _id: currentUserId, friends: u._id });
+        if (isFriend) {
+            u.relation = 'FRIEND';
+            continue;
+        }
+
+        const req = await FriendRequest.findOne({
+            $or: [
+                { sender: currentUserId, receiver: u._id },
+                { sender: u._id, receiver: currentUserId }
+            ],
+            status: { $in: ['PENDING', 'ACCEPTED'] } 
+        });
+
+        if (req) {
+            u.relation = req.sender.toString() === currentUserId.toString() ? 'REQUEST_SENT' : 'REQUEST_RECEIVED';
+        } else {
+            u.relation = 'NONE';
+        }
+    }
 
     return users;
 };
